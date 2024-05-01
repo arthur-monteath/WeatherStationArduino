@@ -111,30 +111,40 @@ void updateUVIndex()
 double temperature = 0.0; // Celsius
 void updateTemperature()
 {
+  int input = analogRead(A14);
+  
   temperature = 0.0;
 }
 
 double pressure = 0.0; // hPa
 void updatePressure()
 {
+  int input = analogRead(A12);
+  
   pressure = 0.0;
 }
 
 double windSpeed = 0.0; // m/s
 void updateWindSpeed()
 {
+  int input = analogRead(A8); // int input = analogRead(A9);
+  
   windSpeed = 0.0;
 }
 
 double windDirection = 0.0; // degrees
 void updateWindDirection()
 {
+  int input = analogRead(A10); // int input = analogRead(A11);
+  
   windDirection = 0.0;
 }
 
 double humidity = 0.0;
 void updateHumidity()
 {
+  int input = analogRead(A13);
+  
   humidity = 0.0;
 }
 
