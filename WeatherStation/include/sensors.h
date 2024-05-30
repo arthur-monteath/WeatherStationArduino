@@ -1,4 +1,10 @@
 #include <Arduino.h>
+#define HALL 26
+
+void setupSensors()
+{
+    pinMode(HALL, INPUT_PULLUP);
+}
 
 int getUVIndex()
 {

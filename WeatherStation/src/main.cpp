@@ -1,8 +1,11 @@
 #include "ethernetFunctions.h"
 #include "lcdController.h"
 #include "sensors.h"
+#include "espWifi.h"
 
 void setup() {
+
+  setupSensors();
 
   Serial.begin(9600);
   while (!Serial) {
@@ -10,7 +13,8 @@ void setup() {
   }
 
   setupLcd();
-  setupEthernet();
+  //setupEthernet();
+  setupWifi();
 }
 
 int uvIndex = 0;
@@ -31,12 +35,47 @@ void updateSensorsData()
   humidity = getHumidity();
 }
 
-int ticks = 0;
-void loop() {
-  
-  connectionLoop();
+void handleClientRequest(EthernetClient client) {
+  if (client.available()) {
+    String request = client.readStringUntil('\r');
+    client.flush();
 
-  update50ms();
+    if (request.indexOf("/data") != -1) {
+      // Create a JSON object
+      JsonDocument doc;
+      doc["temperature"] = temperature;
+      doc["humidity"] = humidity;
+      doc["pressure"] = pressure;
+      doc["direction"] = windDirection;
+      doc["speed"] = windSpeed;
+      doc["uv"] = uvIndex;
+
+      // Serialize the JSON object to a string
+      String jsonString;
+      serializeJson(doc, jsonString);
+      
+      // Send HTTP response with JSON content type
+      client.println("HTTP/1.1 200 OK");
+      client.println("Content-Type: application/json");
+      client.println("Connection: close");
+      client.println();
+      client.println(jsonString);
+    } else {
+      client.println("HTTP/1.1 404 Not Found");
+      client.println("Connection: close");
+    }
+  }
+}
+
+void connectionLoop() {
+  EthernetClient client = server.available();
+  if (client) {
+    if (client.connected()) {
+      Serial.println("Client Connected");
+      handleClientRequest(client);
+      client.stop();
+    }
+  }
 }
 
 void update50ms()
@@ -88,4 +127,12 @@ void update50ms()
   }
 
   updateLcdButtons();
+}
+
+int ticks = 0;
+void loop() {
+  Serial.println(digitalRead(HALL)); 
+  connectionLoop();
+
+  //update50ms();
 }
