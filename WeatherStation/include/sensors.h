@@ -1,9 +1,41 @@
 #include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BMP280.h>
+
 #define HALL 26
+
+Adafruit_BMP280 bmp;
+
+const float mmPerPulse = 0.173;  //put here the value of rain in mm for each movement of the bucket
+
+float mmTotal = 0;
+int sensorHall = 0;
+int precedingState = 0;
+
+void rainGaugeCheck() {
+  sensorHall = digitalRead(HALL);
+  
+  if (sensorHall != precedingState) {
+    mmTotal += mmPerPulse;
+  }
+  
+  precedingState = sensorHall;
+}
 
 void setupSensors()
 {
-    pinMode(HALL, INPUT_PULLUP);
+    pinMode(HALL, INPUT); // Setup Hall Effect
+
+    Serial.print("Hall Sensor setup at pin ");
+    Serial.println(HALL);
+
+    if (!bmp.begin(0x77)) {  // You can try 0x77 if 0x76 doesn't work
+        Serial.println("Could not find a valid BMP280 sensor, check wiring!");
+    }
+
+    Serial.println("bmp was found! :D");
+    Serial.println("Not in a loop!");
 }
 
 int getUVIndex()
@@ -26,28 +58,31 @@ int getUVIndex()
                     return 11;
 }
 
-double getTemperature()
+float getTemperature()
 {
-    int input = analogRead(A14);
-    
-    return; // TO-DO
+    // Temperature in Celsius
+    float bmpTemperature = bmp.readTemperature();
+
+    //Serial.print("Bmp Temperature: ");
+    //Serial.println(bmpTemperature);
+
+    return bmpTemperature;
 }
 
-double getPressure()
+float getPressure()
 {
-    int input = analogRead(A12);
-    
-    return; // TO-DO
+    // Get pressure in hPa
+    return bmp.readPressure() / 100.0F;
 }
 
-double getWindSpeed()
+float getWindSpeed()
 {
     int input = analogRead(A8); // int input = analogRead(A9);
     
     return; // TO-DO
 }
 
-double getWindDirection()
+float getWindDirection()
 {
     int input = analogRead(A10); // int input = analogRead(A11);
     
@@ -55,16 +90,17 @@ double getWindDirection()
 }
 
 
-double getHumidity()
+float getHumidity()
 {
     int input = analogRead(A13);
     
     return; // TO-DO
 }
 
-double getRainDensity()
+float getRainDensity()
 {
-    int input = analogRead(0);
+    float temp = mmTotal;
+    mmTotal = 0;
 
-    return; // TO-DO
+    return temp; // TO-DO
 }

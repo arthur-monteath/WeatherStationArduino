@@ -5,14 +5,16 @@
 
 void setup() {
 
-  setupSensors();
-
   Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
 
-  setupLcd();
+  Serial.println("Serial has Begun");
+
+  setupSensors();
+
+  //setupLcd();
   //setupEthernet();
   setupWifi();
 }
@@ -25,6 +27,8 @@ double windDirection = 0.0; // degrees
 double humidity = 0.0;
 double rainDensity = 0.0;
 
+int num = 0;
+
 void updateSensorsData()
 {
   uvIndex = getUVIndex();
@@ -33,6 +37,33 @@ void updateSensorsData()
   windSpeed = getWindSpeed();
   windDirection = getWindDirection();
   humidity = getHumidity();
+
+  // Print the updated sensor values
+  Serial.println("Updated Sensors #" + num);
+  num++;
+
+  Serial.print("UV Index: ");
+  Serial.println(uvIndex);
+
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.println(" °C");
+
+  Serial.print("Pressure: ");
+  Serial.print(pressure);
+  Serial.println(" hPa");
+
+  Serial.print("Wind Speed: ");
+  Serial.print(windSpeed);
+  Serial.println(" m/s");
+
+  Serial.print("Wind Direction: ");
+  Serial.print(windDirection);
+  Serial.println(" degrees");
+
+  Serial.print("Humidity: ");
+  Serial.print(humidity);
+  Serial.println(" %");
 }
 
 void handleClientRequest(EthernetClient client) {
@@ -79,9 +110,7 @@ void connectionLoop() {
 }
 
 void update50ms()
-{
-  updateSensorsData();
-  
+{ 
   if(viewingData)
   {
     lcd.setCursor(0, 0);
@@ -131,8 +160,21 @@ void update50ms()
 
 int ticks = 0;
 void loop() {
-  Serial.println(digitalRead(HALL)); 
+  
   connectionLoop();
 
-  //update50ms();
+  if(ticks % 5 == 0)
+  {
+    rainGaugeCheck();
+  }
+
+  if(ticks >= 100)
+  {
+    updateSensorsData();
+    ticks = 0;
+  }
+
+  ticks++;
+
+  delay(100);
 }
