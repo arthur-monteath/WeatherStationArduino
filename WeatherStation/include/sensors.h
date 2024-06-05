@@ -1,13 +1,23 @@
 #include <Arduino.h>
+#include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SH110X.h>
+#include <Adafruit_AHTX0.h>
 
 #define HALL 26
+
+Adafruit_AHTX0 aht;
 
 Adafruit_BMP280 bmp;
 
 const float mmPerPulse = 0.173;  //put here the value of rain in mm for each movement of the bucket
+
+const int UVPin = A3;
+const int directionPin = A4;
+const int speedPin = A5;
 
 float mmTotal = 0;
 int sensorHall = 0;
@@ -27,20 +37,24 @@ void setupSensors()
 {
     pinMode(HALL, INPUT); // Setup Hall Effect
 
-    Serial.print("Hall Sensor setup at pin ");
-    Serial.println(HALL);
-
-    if (!bmp.begin(0x77)) {  // You can try 0x77 if 0x76 doesn't work
-        Serial.println("Could not find a valid BMP280 sensor, check wiring!");
+    if (bmp.begin()) {
+        Serial.println("Found BMP280");
+    } else {
+        Serial.println("Didn't find BMP280");
     }
 
-    Serial.println("bmp was found! :D");
-    Serial.println("Not in a loop!");
+    if (aht.begin()) {
+        Serial.println("Found AHT20");
+    } else {
+        Serial.println("Didn't find AHT20");
+    }
+
+    Serial.println("Sensors setup done!");
 }
 
 int getUVIndex()
 {
-    int sensorValue = analogRead(A15);
+    int sensorValue = analogRead(UVPin);
     
     double mV = sensorValue*5000/1023.0;
 
@@ -55,7 +69,7 @@ int getUVIndex()
     if (mV < 928)   return 8;    
     if (mV < 1027)  return 9;  
     if (mV < 1124)  return 10;     
-                    return 11;
+    return 11;
 }
 
 float getTemperature()
@@ -63,10 +77,14 @@ float getTemperature()
     // Temperature in Celsius
     float bmpTemperature = bmp.readTemperature();
 
-    //Serial.print("Bmp Temperature: ");
-    //Serial.println(bmpTemperature);
+    Serial.print("Bmp Temperature: ");
+    Serial.println(bmpTemperature);
 
-    return bmpTemperature;
+    sensors_event_t humidity, temp;
+
+    aht.getEvent(&humidity, &temp);
+
+    return temp.temperature;
 }
 
 float getPressure()
@@ -77,24 +95,26 @@ float getPressure()
 
 float getWindSpeed()
 {
-    int input = analogRead(A8); // int input = analogRead(A9);
+    int input = analogRead(speedPin); // int input = analogRead(A9);
     
-    return; // TO-DO
+    return input;
 }
 
 float getWindDirection()
 {
-    int input = analogRead(A10); // int input = analogRead(A11);
+    int input = analogRead(directionPin); // int input = analogRead(A11);
     
-    return; // TO-DO
+    return input;
 }
 
 
 float getHumidity()
 {
-    int input = analogRead(A13);
-    
-    return; // TO-DO
+    sensors_event_t humidity, temp;
+
+    aht.getEvent(&humidity, &temp);
+
+    return humidity.relative_humidity;
 }
 
 float getRainDensity()
