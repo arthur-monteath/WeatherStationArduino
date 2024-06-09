@@ -1,45 +1,61 @@
-#include "ethernetFunctions.h"
 #include "lcdController.h"
 #include "sensors.h"
-#include "espWifi.h"
+#include<Wire.h>
+#include<SoftwareSerial.h>
+#include<i2cdetect.h>
 
 void setup() {
-
+  
+  Wire.begin();
   Serial.begin(9600);
+  
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
 
   Serial.println("Serial has Begun");
 
-  setupSensors();
+  //setupSensors();
 
   //setupLcd();
   //setupEthernet();
-  setupWifi();
+  //setupWifi();
 }
 
+/*void loop()
+{
+  i2cdetect();
+
+  delay(2000);
+}*/
+
 int uvIndex = 0;
-double temperature = 0.0; // Celsius
-double pressure = 0.0; // hPa
-double windSpeed = 0.0; // m/s
-double windDirection = 0.0; // degrees
-double humidity = 0.0;
-double rainDensity = 0.0;
+float temperature = 0.0; // Celsius
+float pressure = 0.0; // hPa
+float windSpeed = 0.0; // m/s
+float windDirection = 0.0; // degrees
+float humidity = 0.0;
+float rainDensity = 0.0;
 
 int num = 0;
 
 void updateSensorsData()
 {
+  Serial.println("Fetching Sensors...");
+
+  Serial.println("Fetching UV Index...");
   uvIndex = getUVIndex();
-  temperature = getTemperature();
-  pressure = getPressure();
+  Serial.println("Fetching Temperature and Humidity...");
+  getTemperatureAndHumidity(&temperature, &humidity);
+  Serial.println("Fetching Pressure...");
+  pressure = 0;//getPressure();
+  Serial.println("Fetching Wind Speed...");
   windSpeed = getWindSpeed();
+  Serial.println("Fetching Wind Direction...");
   windDirection = getWindDirection();
-  humidity = getHumidity();
 
   // Print the updated sensor values
-  Serial.println("Updated Sensors #" + num);
+  Serial.println("...Updated Sensors #" + num);
   num++;
 
   Serial.print("UV Index: ");
@@ -65,7 +81,7 @@ void updateSensorsData()
   Serial.print(humidity);
   Serial.println(" %");
 }
-
+/*
 void handleClientRequest(EthernetClient client) {
   if (client.available()) {
     String request = client.readStringUntil('\r');
@@ -108,19 +124,26 @@ void connectionLoop() {
     }
   }
 }
-
+*/
 int ticks = 0;
+
 void loop() {
   
-  connectionLoop();
+  //connectionLoop();
 
   if(ticks % 5 == 0)
   {
-    rainGaugeCheck();
+    //rainGaugeCheck();
+  }
+
+  if(ticks % 50 == 0)
+  {
+    i2cdetect();
   }
 
   if(ticks >= 100)
   {
+    i2cdetect();
     updateSensorsData();
     ticks = 0;
   }
