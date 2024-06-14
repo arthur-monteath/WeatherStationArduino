@@ -1,4 +1,4 @@
-      #include<Wire.h>
+#include<Wire.h>
 
 #define AHT25_ADDRESS 0x38
 

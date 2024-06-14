@@ -32,19 +32,19 @@ void setupSensors()
 {
     pinMode(HALL, INPUT); // Setup Hall Effect
 
-    /*if (bmp.begin(0x76)) {
+    if (bmp.begin(0x76)) {
         Serial.println("Found BMP280");
     } else {
         Serial.println("Didn't find BMP280");
-    }*/
+    }
 
-    Serial.println("Starting AHT25...");
+    /*Serial.println("Starting AHT25..."); AHT25 broke so we weren't able to use it
 
     if (initAHT25()) {
     Serial.println("Found AHT25");
     } else {
         Serial.println("Didn't find AHT25");
-    }
+    }*/
 
     Serial.println("Sensors setup done!");
 }
@@ -90,6 +90,11 @@ void getTemperatureAndHumidity(float* varTemp, float* varHumidity)
         *varHumidity = humidity;
         *varTemp = temp;
     }
+}
+
+float getTemperature()
+{
+    return bmp.readTemperature();
 }
 
 float getPressure()

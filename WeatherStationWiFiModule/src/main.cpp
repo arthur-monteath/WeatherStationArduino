@@ -1,15 +1,26 @@
-#include<ESP8266WiFi.h>
+#include <ESP8266WiFi.h>
 
-const char* ssid = "your_SSID";
-const char* password = "your_password";
+const char* ssid = "EAR_WiFi";
+const char* password = "Ear@2020";
+
+// Static IP configuration
+IPAddress local_IP(172, 16, 23, 202);
+IPAddress gateway(172, 16, 20, 1);
+IPAddress subnet(255, 255, 248, 0);
+IPAddress dns(8, 8, 8, 8);
 
 WiFiServer server(80);
 String jsonData = ""; // Variable to store received JSON data
 
 void setup() {
-
   Serial.begin(9600); // Initialize serial communication with Arduino
   Serial.println();
+
+  // Configuring static IP
+  if (!WiFi.config(local_IP, gateway, subnet, dns)) {
+    Serial.println("STA Failed to configure");
+  }
+
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -26,7 +37,6 @@ void setup() {
 }
 
 void loop() {
-
   WiFiClient client = server.available();
 
   if (Serial.available() > 0) {

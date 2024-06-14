@@ -2,7 +2,7 @@
 #include "sensors.h"
 #include<Wire.h>
 #include<SoftwareSerial.h>
-#include<i2cdetect.h>
+#include<ArduinoJson.h>
 
 void setup() {
   
@@ -15,19 +15,12 @@ void setup() {
 
   Serial.println("Serial has Begun");
 
-  //setupSensors();
+  setupSensors();
 
   //setupLcd();
   //setupEthernet();
   //setupWifi();
 }
-
-/*void loop()
-{
-  i2cdetect();
-
-  delay(2000);
-}*/
 
 int uvIndex = 0;
 float temperature = 0.0; // Celsius
@@ -41,21 +34,38 @@ int num = 0;
 
 void updateSensorsData()
 {
-  Serial.println("Fetching Sensors...");
+  //Serial.println("Fetching Sensors...");
+  
+  //Serial.println("Fetching Temperature and Humidity...");
+  //getTemperatureAndHumidity(&temperature, &humidity);
 
-  Serial.println("Fetching UV Index...");
+  //Serial.println("Fetching UV Index...");
   uvIndex = getUVIndex();
-  Serial.println("Fetching Temperature and Humidity...");
-  getTemperatureAndHumidity(&temperature, &humidity);
-  Serial.println("Fetching Pressure...");
-  pressure = 0;//getPressure();
-  Serial.println("Fetching Wind Speed...");
+  //Serial.println("Fetching Temperature...");
+  temperature = getTemperature();
+  //Serial.println("Fetching Pressure...");
+  pressure = getPressure();
+  //Serial.println("Fetching Wind Speed...");
   windSpeed = getWindSpeed();
-  Serial.println("Fetching Wind Direction...");
+  //Serial.println("Fetching Wind Direction...");
   windDirection = getWindDirection();
 
+  // Create a JSON object
+  JsonDocument doc;
+  doc["temperature"] = temperature;
+  doc["humidity"] = humidity;
+  doc["pressure"] = pressure;
+  doc["direction"] = windDirection;
+  doc["speed"] = windSpeed;
+  doc["uv"] = uvIndex;
+
+  // Serialize the JSON object to a string
+  String jsonString;
+  serializeJson(doc, jsonString);
+  Serial.println(jsonString);
+
   // Print the updated sensor values
-  Serial.println("...Updated Sensors #" + num);
+  /*Serial.println("...Updated Sensors #" + num);
   num++;
 
   Serial.print("UV Index: ");
@@ -79,8 +89,9 @@ void updateSensorsData()
 
   Serial.print("Humidity: ");
   Serial.print(humidity);
-  Serial.println(" %");
+  Serial.println(" %");*/
 }
+
 /*
 void handleClientRequest(EthernetClient client) {
   if (client.available()) {
@@ -100,7 +111,8 @@ void handleClientRequest(EthernetClient client) {
       // Serialize the JSON object to a string
       String jsonString;
       serializeJson(doc, jsonString);
-      
+      client.println(jsonString);
+
       // Send HTTP response with JSON content type
       client.println("HTTP/1.1 200 OK");
       client.println("Content-Type: application/json");
@@ -125,6 +137,7 @@ void connectionLoop() {
   }
 }
 */
+
 int ticks = 0;
 
 void loop() {
@@ -133,17 +146,16 @@ void loop() {
 
   if(ticks % 5 == 0)
   {
-    //rainGaugeCheck();
+    rainGaugeCheck();
   }
 
   if(ticks % 50 == 0)
   {
-    i2cdetect();
+    
   }
 
   if(ticks >= 100)
   {
-    i2cdetect();
     updateSensorsData();
     ticks = 0;
   }
