@@ -4,7 +4,7 @@ const char* ssid = "EAR_WiFi";
 const char* password = "Ear@2020";
 
 // Static IP configuration
-IPAddress local_IP(172, 16, 23, 202);
+IPAddress local_IP(172, 16, 23, 202); // 172.16.23.202:80
 IPAddress gateway(172, 16, 20, 1);
 IPAddress subnet(255, 255, 248, 0);
 IPAddress dns(8, 8, 8, 8);
@@ -13,7 +13,7 @@ WiFiServer server(80);
 String jsonData = ""; // Variable to store received JSON data
 
 void setup() {
-  Serial.begin(9600); // Initialize serial communication with Arduino
+  Serial.begin(9600); 
   Serial.println();
 
   // Configuring static IP
@@ -37,12 +37,12 @@ void setup() {
 }
 
 void loop() {
-  WiFiClient client = server.available();
+  WiFiClient client = server.accept();
 
-  if (Serial.available() > 0) {
+  /*if (Serial.available() > 0) {
     jsonData = Serial.readStringUntil('\n');
     Serial.println("Data received from Arduino: " + jsonData);
-  }
+  }*/
 
   if (client) {
     Serial.println("New Client.");

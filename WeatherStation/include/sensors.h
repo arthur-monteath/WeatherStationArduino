@@ -106,19 +106,18 @@ float getPressure()
 float getWindSpeed()
 {
     int input = analogRead(speedPin); // int input = analogRead(A9);
-    
-    return input;
+
+    return input * (1/34.91) * 0.371;
 }
+
+float OldRange = 1023; // 0 - 1023  
+float NewRange = 360; // 0 -360
 
 float getWindDirection()
 {
     int input = analogRead(directionPin); // int input = analogRead(A11);
-    
-    /*float OldRange = 1023; // 0 - 1023  
-    float NewRange = 360; // 0 -360  
-    float value = (input * NewRange) / OldRange;*/
 
-    return input;
+    return (input * NewRange) / OldRange;
 }
 
 float getRainDensity()

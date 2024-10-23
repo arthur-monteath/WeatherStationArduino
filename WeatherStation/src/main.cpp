@@ -1,13 +1,17 @@
 #include "lcdController.h"
 #include "sensors.h"
+#include<espWifi.h>
+#include<espSerial.h>
 #include<Wire.h>
 #include<SoftwareSerial.h>
 #include<ArduinoJson.h>
 
+String jsonData = ""; // Variable to store JSON data
+
 void setup() {
   
-  Wire.begin();
-  Serial.begin(9600);
+  /*Wire.begin();
+  Serial.begin(115200);
   
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
@@ -15,11 +19,13 @@ void setup() {
 
   Serial.println("Serial has Begun");
 
+  //setupESP();
+
   setupSensors();
 
   //setupLcd();
-  //setupEthernet();
-  //setupWifi();
+  //setupEthernet();*/
+  setupWifi();
 }
 
 int uvIndex = 0;
@@ -32,40 +38,9 @@ float rainDensity = 0.0;
 
 int num = 0;
 
-void updateSensorsData()
+void debugSensors()
 {
-  //Serial.println("Fetching Sensors...");
-  
-  //Serial.println("Fetching Temperature and Humidity...");
-  //getTemperatureAndHumidity(&temperature, &humidity);
-
-  //Serial.println("Fetching UV Index...");
-  uvIndex = getUVIndex();
-  //Serial.println("Fetching Temperature...");
-  temperature = getTemperature();
-  //Serial.println("Fetching Pressure...");
-  pressure = getPressure();
-  //Serial.println("Fetching Wind Speed...");
-  windSpeed = getWindSpeed();
-  //Serial.println("Fetching Wind Direction...");
-  windDirection = getWindDirection();
-
-  // Create a JSON object
-  JsonDocument doc;
-  doc["temperature"] = temperature;
-  doc["humidity"] = humidity;
-  doc["pressure"] = pressure;
-  doc["direction"] = windDirection;
-  doc["speed"] = windSpeed;
-  doc["uv"] = uvIndex;
-
-  // Serialize the JSON object to a string
-  String jsonString;
-  serializeJson(doc, jsonString);
-  Serial.println(jsonString);
-
-  // Print the updated sensor values
-  /*Serial.println("...Updated Sensors #" + num);
+  Serial.println("...Updated Sensors #" + num);
   num++;
 
   Serial.print("UV Index: ");
@@ -89,69 +64,48 @@ void updateSensorsData()
 
   Serial.print("Humidity: ");
   Serial.print(humidity);
-  Serial.println(" %");*/
+  Serial.println(" %");
 }
 
-/*
-void handleClientRequest(EthernetClient client) {
-  if (client.available()) {
-    String request = client.readStringUntil('\r');
-    client.flush();
+void updateSensorsData()
+{
+  //Serial.println("Fetching UV Index...");
+  uvIndex = 6;
+  //Serial.println("Fetching Temperature...");
+  temperature = getTemperature();
+  //Serial.println("Fetching Pressure...");
+  pressure = getPressure();
+  //Serial.println("Fetching Wind Speed...");
+  windSpeed = getWindSpeed();
+  //Serial.println("Fetching Wind Direction...");
+  windDirection = getWindDirection();
 
-    if (request.indexOf("/data") != -1) {
-      // Create a JSON object
-      JsonDocument doc;
-      doc["temperature"] = temperature;
-      doc["humidity"] = humidity;
-      doc["pressure"] = pressure;
-      doc["direction"] = windDirection;
-      doc["speed"] = windSpeed;
-      doc["uv"] = uvIndex;
+  humidity = 63.2;
 
-      // Serialize the JSON object to a string
-      String jsonString;
-      serializeJson(doc, jsonString);
-      client.println(jsonString);
+  // Create a JSON object
+  JsonDocument doc;
+  doc["temperature"] = temperature;
+  doc["humidity"] = humidity;
+  doc["pressure"] = pressure;
+  doc["direction"] = windDirection;
+  doc["speed"] = windSpeed;
+  doc["uv"] = uvIndex;
 
-      // Send HTTP response with JSON content type
-      client.println("HTTP/1.1 200 OK");
-      client.println("Content-Type: application/json");
-      client.println("Connection: close");
-      client.println();
-      client.println(jsonString);
-    } else {
-      client.println("HTTP/1.1 404 Not Found");
-      client.println("Connection: close");
-    }
-  }
+  // Serialize the JSON object to a string
+  serializeJson(doc, jsonData);
+
+  debugSensors();
 }
-
-void connectionLoop() {
-  EthernetClient client = server.available();
-  if (client) {
-    if (client.connected()) {
-      Serial.println("Client Connected");
-      handleClientRequest(client);
-      client.stop();
-    }
-  }
-}
-*/
 
 int ticks = 0;
 
 void loop() {
-  
-  //connectionLoop();
+
+  //connectionLoop(jsonData);
 
   if(ticks % 5 == 0)
   {
     rainGaugeCheck();
-  }
-
-  if(ticks % 50 == 0)
-  {
-    
   }
 
   if(ticks >= 100)
