@@ -1,99 +1,92 @@
-#include <WiFi.h>
-#include <WiFiClientSecure.h>
+#include <Wire.h>
 #include <ArduinoJson.h>
-
-// WiFi credentials
-const char* ssid = "EAR_WiFi";
-const char* password = "Ear@2020";
-
-// Static IP configuration
-IPAddress local_IP(172, 16, 23, 202); // 172.16.23.202:80
-IPAddress gateway(172, 16, 20, 1);
-IPAddress subnet(255, 255, 248, 0);
-IPAddress dns(8, 8, 8, 8);
-
-// API server details
-const char* host = "script.google.com";
-const char* scriptPath = "/macros/s/AKfycbzNawwnkY1OKcx0vpk-M8RpdLx12i7QK3IoniAU_eydkLgs4nq5QvnNOalZyU0pRocg/exec";  // Replace with your API host
-const int port = 443; // 80 = HTTP; 443 = HTTPS
-
-// Dummy temperature and humidity values
-float temperature = 25.5;
-float humidity = 60.2;
+#include "WifiEsp.h"
+#include "sensors.h"
 
 void setup() {
-
+  
+  Wire.begin();
   Serial.begin(115200);
-  Serial.println();
+  
+  while (!Serial)
+  {
+    ;
+  }
+
+  Serial.println("Serial has Begun");
+
+  setupSensors();
+
+  setupWifi();
 
   // SDA: 21 SCL: 22
-  // Configuring static IP
-  if (!WiFi.config(local_IP, gateway, subnet, dns)) {
-    Serial.println("STA Failed to configure");
-  }
-
-  // Connect to Wi-Fi
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
 }
 
+int uvIndex = 0;
+float temperature = 0.0; // Celsius
+float pressure = 0.0; // hPa
+float windSpeed = 0.0; // m/s
+float windDirection = 0.0; // degrees
+float humidity = 0.0;
+float rainDensity = 0.0;
+
+void updateSensorsData()
+{
+  Serial.print("Fetching UV Index... ");
+  uvIndex = 6;
+  Serial.println(uvIndex);
+
+  Serial.print("Fetching Temperature... ");
+  temperature = getTemperature();
+  Serial.println(temperature);
+  
+  Serial.print("Fetching Pressure... ");
+  pressure = getPressure();
+  Serial.println(pressure);
+
+  Serial.print("Fetching Wind Speed... ");
+  windSpeed = getWindSpeed();
+  Serial.println(windSpeed);
+
+  Serial.print("Fetching Wind Direction... ");
+  windDirection = getWindDirection();
+  Serial.println(windDirection);
+
+  humidity = 63.2;
+
+  Serial.print("Fetching Rain Density... ");
+  rainDensity = getRainDensity();
+  Serial.println(rainDensity);
+
+  // Create a JSON object
+  JsonDocument doc;
+  doc["temperature"] = temperature;
+  //doc["humidity"] = humidity;
+  doc["pressure"] = pressure;
+  doc["direction"] = windDirection;
+  doc["speed"] = windSpeed;
+  doc["rain"] = rainDensity;
+  doc["uv"] = uvIndex;
+
+  uploadData(doc);
+}
+
+int ticks = 0;
+
 void loop() {
-  // Check if WiFi is connected
-  if (WiFi.status() == WL_CONNECTED) {
-    WiFiClientSecure client;
-    
-    client.setInsecure();
 
-    // Connect to the API server
-    if (client.connect(host, port)) {
-      Serial.println("Connected to server");
-      
-      // Create JSON object with temperature and humidity data
-      JsonDocument jsonDoc;
-      jsonDoc["temperature"] = temperature;
-      jsonDoc["humidity"] = humidity;
-
-      // Serialize JSON object to a string
-      String jsonData;
-      serializeJson(jsonDoc, jsonData);
-
-      // Prepare HTTP POST request
-      String httpRequest = String("POST ") + scriptPath + " HTTP/1.1\r\n" +  // Replace "/api" with your API path
-                           "Host: " + host + "\r\n" +
-                           "Content-Type: application/json\r\n" +
-                           "Content-Length: " + jsonData.length() + "\r\n" +
-                           "Connection: close\r\n\r\n" + 
-                           jsonData + "\r\n";
-
-      // Send the HTTP request to the server
-      client.print(httpRequest);
-
-      // Wait for server's response
-      while (client.connected() || client.available()) {
-        if (client.available()) {
-          String response = client.readString();
-          Serial.println("Response from server: " + response);
-        }
-      }
-
-      // Close the connection
-      client.stop();
-      Serial.println("Disconnected from server");
-    } else {
-      Serial.println("Connection to server failed");
-    }
-  } else {
-    Serial.println("WiFi not connected");
+  if(ticks % 5 == 0)
+  {
+    rainGaugeCheck();
   }
 
-  // Delay for 10 seconds before the next request
-  delay(10000);
+  if(ticks >= 100)
+  {
+    updateSensorsData();
+    ticks = 0;
+  }
+
+  ticks++;
+
+  delay(100);
 }
